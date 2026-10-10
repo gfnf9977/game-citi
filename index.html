@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вгадай населений пункт</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>Вгадай населений пункт</h1>
+
+    <div class="controls">
+        <select id="region-select">
+            <option value="all">Завантаження...</option>
+        </select>
+    </div>
+
+    <div class="layout">
+        <div class="main-col">
+            <div class="stats">
+                <div class="stats-main">
+                    <span>Відгадано: <strong id="score" style="color: var(--success); font-size: 24px;">0</strong> / <span id="total">0</span></span>
+                    <span id="status-message" style="color: var(--subtext); font-size: 0.9em;">...</span>
+                </div>
+
+                <div id="extended-stats" class="stats-extended hidden">
+                    <div class="progress-line">
+                        <span>Н.П.: <strong id="stat-np-percent">0%</strong></span>
+                        <span>Населення: <strong id="stat-pop-score">0</strong> / <span id="stat-pop-total">0</span> (<strong id="stat-pop-percent">0%</strong>)</span>
+                    </div>
+                </div>
+            </div>
+
+            <input type="text" id="guess-input" placeholder="Почни вводити назву..." disabled autocomplete="off">
+            <div style="font-size: 12px; color: var(--subtext); margin-top: -15px; margin-bottom: 20px; text-align: center;">
+                Підказка: Використовуй стрілочки ↑ та ↓ для навігації по історії введених назв.
+            </div>
+
+            <div class="list-container" id="guessed-list"></div>
+        </div>
+
+        <div class="side-col">
+            <div id="sidebar-header" class="sidebar-header hidden">
+                <button class="btn-back" id="btn-zoom-out">← Всі області</button>
+                <div class="sidebar-title" id="sidebar-title">Назва області</div>
+            </div>
+            <div id="sidebar-content"></div>
+        </div>
+    </div>
+
+    <div id="custom-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h2 class="modal-title" id="modal-title">Заголовок</h2>
+            <div class="modal-text" id="modal-text">Текст</div>
+            <div class="modal-buttons" id="modal-buttons"></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
