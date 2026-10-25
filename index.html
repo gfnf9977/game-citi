@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Вгадай населений пункт</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -35,6 +37,8 @@
             <div style="font-size: 12px; color: var(--subtext); margin-top: -15px; margin-bottom: 20px; text-align: center;">
                 Підказка: Використовуй стрілочки ↑ та ↓ для навігації по історії введених назв.
             </div>
+
+            <div id="map-container"></div>
 
             <div class="list-container" id="guessed-list"></div>
         </div>

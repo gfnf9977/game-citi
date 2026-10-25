@@ -15,6 +15,9 @@ let guessedRegionPop = 0;
 let regionsData = {};
 let rayonsData = {};
 
+let map;
+let markersLayer;
+
 const inputField = document.getElementById('guess-input');
 const scoreEl = document.getElementById('score');
 const totalEl = document.getElementById('total');
@@ -62,6 +65,17 @@ function normalize(str) {
 
 function getPop(place) { return parseInt(place.population) || 0; }
 
+function initMap() {
+    map = L.map('map-container').setView([48.3794, 31.1656], 6);
+
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ',
+        maxZoom: 16
+    }).addTo(map);
+
+    markersLayer = L.layerGroup().addTo(map);
+}
+
 async function loadData() {
     try {
         const response = await fetch('55.json');
@@ -92,6 +106,10 @@ function startGame(regionValue) {
     namesMap.clear();
     guessHistory = [];
     historyIndex = -1;
+
+    if (markersLayer) {
+        markersLayer.clearLayers();
+    }
 
     currentMode = regionValue;
     zoomedRegion = null;
@@ -324,6 +342,20 @@ inputField.addEventListener('input', (e) => {
 
                 updateLiveSidebar(regName, rName);
 
+                if (place.latitude && place.longitude) {
+                    const marker = L.circleMarker([place.latitude, place.longitude], {
+                        color: '#a6e3a1',
+                        radius: 5,
+                        fillOpacity: 0.8,
+                        weight: 1
+                    });
+
+                    const popLabel = place.population ? `<br>Нас: ${pop.toLocaleString('uk-UA')}` : '';
+                    marker.bindPopup(`<b>${place['name:uk']}</b><br><span style="color: var(--subtext)">${place.place || ''}</span>${popLabel}`);
+
+                    markersLayer.addLayer(marker);
+                }
+
                 const div = document.createElement('div');
                 div.className = 'place-item';
 
@@ -361,4 +393,5 @@ inputField.addEventListener('input', (e) => {
     }
 });
 
+initMap();
 loadData();
