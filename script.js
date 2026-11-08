@@ -84,13 +84,21 @@ async function loadData() {
         
         allData = rawData.filter(p => p['name:uk'] && p['name:uk'].toString().trim() !== '');
         
-        // НОВИЙ БЛОК: Перекидаємо Київ та Севастополь у відповідні області
+        // ОНОВЛЕНИЙ БЛОК: Задаємо не тільки область, але й спеціальний район
         allData.forEach(p => {
             if (p.region === 'Київ' || p.region === 'місто Київ') {
                 p.region = 'Київська область';
+                p.rayon = 'Місто зі спеціальним статусом';
             }
             if (p.region === 'Севастополь' || p.region === 'місто Севастополь') {
                 p.region = 'Автономна Республіка Крим';
+                p.rayon = 'Місто зі спеціальним статусом';
+            }
+            
+            // Захист: якщо в базі є інші пункти без району (наприклад, Прип'ять), 
+            // даємо їм адекватну назву замість "Невідомий"
+            if (!p.rayon) {
+                p.rayon = 'Район не визначено';
             }
         });
         
@@ -140,13 +148,15 @@ function startGame(regionValue) {
 
     extStatsPanel.classList.remove('hidden');
 
+    // (Десь перед currentPool.forEach, всередині startGame, додай лічильник)
+    let rayonIdCounter = 0;
+
     currentPool.forEach((place, index) => {
         place._id = index;
         const pop = getPop(place);
         totalRegionPop += pop;
 
         const nName = normalize(place['name:uk']);
-        // ДОДАНА ПЕРЕВІРКА: if (nName)
         if (nName) {
             if (!namesMap.has(nName)) namesMap.set(nName, []);
             namesMap.get(nName).push(place);
@@ -155,7 +165,6 @@ function startGame(regionValue) {
         const oldName = place['old_name:uk'];
         if (oldName) {
             const nOldName = normalize(oldName);
-            // ДОДАНА ПЕРЕВІРКА: if (nOldName)
             if (nOldName) {
                 if (!namesMap.has(nOldName)) namesMap.set(nOldName, []);
                 namesMap.get(nOldName).push(place);
@@ -167,10 +176,23 @@ function startGame(regionValue) {
         regionsData[reg].totalItems++;
         regionsData[reg].totalPop += pop;
 
-        const ray = place.rayon || 'Невідомий район';
-        if (!rayonsData[ray]) rayonsData[ray] = { region: reg, totalItems: 0, guessedItems: 0, totalPop: 0, guessedPop: 0 };
-        rayonsData[ray].totalItems++;
-        rayonsData[ray].totalPop += pop;
+        // --- НОВИЙ БЛОК ДЛЯ РАЙОНІВ ---
+        const ray = place.rayon || 'Район не визначено';
+        const rayonKey = reg + '_' + ray; // Створюємо унікальний ключ (наприклад: "Автономна Республіка Крим_Місто зі спеціальним статусом")
+
+        if (!rayonsData[rayonKey]) {
+            rayonsData[rayonKey] = { 
+                domId: 'ray-' + (++rayonIdCounter), // Безпечний ID для HTML
+                region: reg, 
+                displayName: ray, // Зберігаємо чисту назву для екрану
+                totalItems: 0, 
+                guessedItems: 0, 
+                totalPop: 0, 
+                guessedPop: 0 
+            };
+        }
+        rayonsData[rayonKey].totalItems++;
+        rayonsData[rayonKey].totalPop += pop;
     });
 
     scoreEl.textContent = '0';
@@ -220,26 +242,26 @@ function renderSidebar() {
             sidebarHeader.classList.add('hidden');
         }
 
-        const activeRayons = Object.keys(rayonsData).filter(rName => rayonsData[rName].region === activeRegion);
+        const activeRayons = Object.keys(rayonsData).filter(k => rayonsData[k].region === activeRegion);
         activeRayons.sort((a,b) => rayonsData[b].totalItems - rayonsData[a].totalItems);
 
-        activeRayons.forEach(rName => {
-            const r = rayonsData[rName];
+        activeRayons.forEach(rayonKey => {
+            const r = rayonsData[rayonKey];
             const percent = r.totalItems > 0 ? ((r.guessedItems / r.totalItems) * 100).toFixed(1) : 0;
 
             const div = document.createElement('div');
             div.className = 'rayon-card';
             div.innerHTML = `
                 <div class="rayon-header">
-                    <span>${cleanRayonName(rName)}</span>
-                    <span id="r-count-${rName}">${r.guessedItems} / ${r.totalItems}</span>
+                    <span>${cleanRayonName(r.displayName)}</span>
+                    <span id="r-count-${r.domId}">${r.guessedItems} / ${r.totalItems}</span>
                 </div>
                 <div class="rayon-stats-text">
                     <span>Населення:</span>
-                    <span id="r-pop-${rName}">${r.guessedPop.toLocaleString('uk-UA')} / ${r.totalPop.toLocaleString('uk-UA')}</span>
+                    <span id="r-pop-${r.domId}">${r.guessedPop.toLocaleString('uk-UA')} / ${r.totalPop.toLocaleString('uk-UA')}</span>
                 </div>
                 <div class="progress-bar-bg">
-                    <div class="progress-bar-fill" id="r-fill-${rName}" style="width: ${percent}%; ${percent >= 100 ? 'background: var(--success);' : ''}"></div>
+                    <div class="progress-bar-fill" id="r-fill-${r.domId}" style="width: ${percent}%; ${percent >= 100 ? 'background: var(--success);' : ''}"></div>
                 </div>
             `;
             sidebarContent.appendChild(div);
@@ -258,7 +280,7 @@ function updateExtendedStats() {
     document.getElementById('stat-pop-percent').textContent = `${popPercent}%`;
 }
 
-function updateLiveSidebar(regName, rName) {
+function updateLiveSidebar(regName, rayonKey) {
     const pieEl = document.getElementById(`reg-pie-${regName}`);
     if (pieEl) {
         const rData = regionsData[regName];
@@ -268,11 +290,12 @@ function updateLiveSidebar(regName, rName) {
         document.getElementById(`reg-val-${regName}`).textContent = `${rData.guessedItems}/${rData.totalItems}`;
     }
 
-    const rData = rayonsData[rName];
+    const rData = rayonsData[rayonKey];
     if (rData) {
-        const countEl = document.getElementById(`r-count-${rName}`);
-        const popEl = document.getElementById(`r-pop-${rName}`);
-        const fillEl = document.getElementById(`r-fill-${rName}`);
+        const countEl = document.getElementById(`r-count-${rData.domId}`);
+        const popEl = document.getElementById(`r-pop-${rData.domId}`);
+        const fillEl = document.getElementById(`r-fill-${rData.domId}`);
+        
         if (countEl) countEl.textContent = `${rData.guessedItems} / ${rData.totalItems}`;
         if (popEl) popEl.textContent = `${rData.guessedPop.toLocaleString('uk-UA')} / ${rData.totalPop.toLocaleString('uk-UA')}`;
         if (fillEl) {
@@ -350,19 +373,20 @@ inputField.addEventListener('input', (e) => {
                 const pop = getPop(place);
                 guessedRegionPop += pop;
 
-                const rName = place.rayon || 'Невідомий район';
+                const rName = place.rayon || 'Район не визначено';
                 const regName = place.region || 'Невідомий регіон';
+                const rayonKey = regName + '_' + rName; // Той самий унікальний ключ
 
-                if (rayonsData[rName]) {
-                    rayonsData[rName].guessedItems++;
-                    rayonsData[rName].guessedPop += pop;
+                if (rayonsData[rayonKey]) {
+                    rayonsData[rayonKey].guessedItems++;
+                    rayonsData[rayonKey].guessedPop += pop;
                 }
                 if (regionsData[regName]) {
                     regionsData[regName].guessedItems++;
                     regionsData[regName].guessedPop += pop;
                 }
 
-                updateLiveSidebar(regName, rName);
+                updateLiveSidebar(regName, rayonKey);
 
                 // 1. Формуємо рядки з інформацією ДО створення маркера, щоб використати їх двічі
                 const placeType = place.place || place['type:uk'] || '';
