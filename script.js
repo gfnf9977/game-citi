@@ -82,8 +82,17 @@ async function loadData() {
         if (!response.ok) throw new Error('Мережева помилка');
         const rawData = await response.json();
         
-        // НОВИЙ РЯДОК: Залишаємо тільки ті пункти, у яких реально є назва
         allData = rawData.filter(p => p['name:uk'] && p['name:uk'].toString().trim() !== '');
+        
+        // НОВИЙ БЛОК: Перекидаємо Київ та Севастополь у відповідні області
+        allData.forEach(p => {
+            if (p.region === 'Київ' || p.region === 'місто Київ') {
+                p.region = 'Київська область';
+            }
+            if (p.region === 'Севастополь' || p.region === 'місто Севастополь') {
+                p.region = 'Автономна Республіка Крим';
+            }
+        });
         
         populateRegions();
         startGame(currentMode);
@@ -405,6 +414,18 @@ inputField.addEventListener('input', (e) => {
 
             inputField.style.borderColor = "var(--success)";
             setTimeout(() => inputField.style.borderColor = "var(--border)", 300);
+
+            // НОВИЙ БЛОК: ПЕРЕВІРКА НА ПЕРЕМОГУ
+            if (guessedIds.size === currentPool.length) {
+                inputField.disabled = true; // Блокуємо ввід
+                setTimeout(() => { // Затримка 400мс, щоб остання крапка встигла з'явитися на карті
+                    showModal(
+                        '🎉 Регіон пройдено!',
+                        `Ти відгадав усі <b>${currentPool.length}</b> н.п.<br>Режим: ${currentMode}`,
+                        'info'
+                    );
+                }, 400);
+            }
         }
     }
 });
