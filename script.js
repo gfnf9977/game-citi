@@ -59,8 +59,11 @@ function showModal(title, text, type, onConfirm) {
 }
 
 function normalize(str) {
-    if(!str) return '';
-    return str.toLowerCase().replace(/['`’ʼ]/g, "'").trim();
+    if (!str) return '';
+    return str.toLowerCase()
+        // Видаляємо всі можливі апострофи, дефіси та пробіли
+        .replace(/['`’ʼ\-\s]/g, "") 
+        .trim();
 }
 
 function getPop(place) { return parseInt(place.population) || 0; }
