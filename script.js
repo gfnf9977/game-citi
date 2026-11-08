@@ -80,7 +80,11 @@ async function loadData() {
     try {
         const response = await fetch('55.json');
         if (!response.ok) throw new Error('Мережева помилка');
-        allData = await response.json();
+        const rawData = await response.json();
+        
+        // НОВИЙ РЯДОК: Залишаємо тільки ті пункти, у яких реально є назва
+        allData = rawData.filter(p => p['name:uk'] && p['name:uk'].toString().trim() !== '');
+        
         populateRegions();
         startGame(currentMode);
     } catch (error) {
@@ -133,14 +137,20 @@ function startGame(regionValue) {
         totalRegionPop += pop;
 
         const nName = normalize(place['name:uk']);
-        if (!namesMap.has(nName)) namesMap.set(nName, []);
-        namesMap.get(nName).push(place);
+        // ДОДАНА ПЕРЕВІРКА: if (nName)
+        if (nName) {
+            if (!namesMap.has(nName)) namesMap.set(nName, []);
+            namesMap.get(nName).push(place);
+        }
 
         const oldName = place['old_name:uk'];
         if (oldName) {
             const nOldName = normalize(oldName);
-            if (!namesMap.has(nOldName)) namesMap.set(nOldName, []);
-            namesMap.get(nOldName).push(place);
+            // ДОДАНА ПЕРЕВІРКА: if (nOldName)
+            if (nOldName) {
+                if (!namesMap.has(nOldName)) namesMap.set(nOldName, []);
+                namesMap.get(nOldName).push(place);
+            }
         }
 
         const reg = place.region || 'Невідомий регіон';
@@ -311,6 +321,9 @@ inputField.addEventListener('keydown', (e) => {
 inputField.addEventListener('input', (e) => {
     const rawInput = e.target.value;
     const val = normalize(rawInput);
+
+    // НОВИЙ РЯДОК: Якщо після нормалізації рядок порожній (наприклад, ввели лише пробіли), просто виходимо
+    if (!val) return;
 
     if (e.isTrusted) {
         historyIndex = -1;
