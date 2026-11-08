@@ -342,6 +342,12 @@ inputField.addEventListener('input', (e) => {
 
                 updateLiveSidebar(regName, rName);
 
+                // 1. Формуємо рядки з інформацією ДО створення маркера, щоб використати їх двічі
+                const placeType = place.place || place['type:uk'] || '';
+                const metaInfo = [placeType, place.rayon, currentMode === 'all' ? place.region : ''].filter(Boolean).join(' | ');
+                const popInfo = place.population ? `Нас: ${getPop(place).toLocaleString('uk-UA')}` : '';
+
+                // 2. Створюємо маркер і додаємо metaInfo (де є район) у bindPopup
                 if (place.latitude && place.longitude) {
                     const marker = L.circleMarker([place.latitude, place.longitude], {
                         color: '#a6e3a1',
@@ -350,18 +356,15 @@ inputField.addEventListener('input', (e) => {
                         weight: 1
                     });
 
-                    const popLabel = place.population ? `<br>Нас: ${pop.toLocaleString('uk-UA')}` : '';
-                    marker.bindPopup(`<b>${place['name:uk']}</b><br><span style="color: var(--subtext)">${place.place || ''}</span>${popLabel}`);
+                    const popupPopHTML = popInfo ? `<br>${popInfo}` : '';
+                    marker.bindPopup(`<b>${place['name:uk']}</b><br><span style="color: var(--subtext)">${metaInfo}</span>${popupPopHTML}`);
 
                     markersLayer.addLayer(marker);
                 }
 
+                // 3. Створюємо елемент списку (змінні metaInfo та popInfo вже готові)
                 const div = document.createElement('div');
                 div.className = 'place-item';
-
-                const placeType = place.place || place['type:uk'] || '';
-                const metaInfo = [placeType, place.rayon, currentMode === 'all' ? place.region : ''].filter(Boolean).join(' | ');
-                const popInfo = place.population ? `Нас: ${pop.toLocaleString('uk-UA')}` : '';
 
                 const oldNameHtml = place['old_name:uk'] ? `<div class="place-old-name">колиш. ${place['old_name:uk']}</div>` : '';
 
