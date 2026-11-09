@@ -127,3 +127,68 @@ input[type="text"]:disabled { background-color: var(--panel-bg); cursor: not-all
     margin: 12px;
     font-family: 'Segoe UI', sans-serif;
 }
+
+/* --- РЕЖИМ РОЗГОРНУТОЇ КАРТИ --- */
+body.map-expanded {
+    overflow: hidden; /* Блокуємо прокрутку сторінки */
+}
+
+/* Ховаємо все зайве */
+body.map-expanded h1,
+body.map-expanded .controls,
+body.map-expanded .stats,
+body.map-expanded .list-container,
+body.map-expanded .side-col,
+body.map-expanded .input-hint {
+    display: none !important; 
+}
+
+/* Розтягуємо карту на весь екран */
+/* Заміни старий блок на цей: */
+body.map-expanded #map-container {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: 100% !important; /* Запобігає появі горизонтальної смуги прокрутки */
+    z-index: 900 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+    border: none !important;
+    display: block !important;
+}
+
+/* Переносимо поле вводу поверх карти */
+body.map-expanded #guess-input {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 600px;
+    z-index: 2000; /* Поверх елементів керування Leaflet */
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5); /* Додаємо тінь для об'єму */
+}
+
+/* Стилізація нашої нової кнопки розгортання */
+.leaflet-control-expand {
+    background-color: var(--panel-bg) !important;
+    color: var(--text-color) !important;
+    border: 2px solid var(--border) !important;
+    border-radius: 4px !important;
+    width: 34px !important;
+    height: 34px !important;
+    line-height: 30px !important;
+    text-align: center;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+.leaflet-control-expand:hover {
+    opacity: 0.8;
+}

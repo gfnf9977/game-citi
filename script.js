@@ -77,6 +77,42 @@ function initMap() {
     }).addTo(map);
 
     markersLayer = L.layerGroup().addTo(map);
+
+    // --- НОВИЙ БЛОК: Кнопка на весь екран ---
+    const expandControl = L.control({position: 'topright'});
+    expandControl.onAdd = function() {
+        const btn = L.DomUtil.create('div', 'leaflet-control-expand leaflet-bar leaflet-control');
+        btn.innerHTML = '⛶'; // Іконка "Розгорнути"
+        btn.title = 'Розгорнути карту';
+        
+        // Щоб при кліку на кнопку не клікалась сама карта під нею
+        L.DomEvent.disableClickPropagation(btn);
+        
+        btn.onclick = function() {
+            document.body.classList.toggle('map-expanded');
+            
+            if (document.body.classList.contains('map-expanded')) {
+                btn.innerHTML = '✖'; 
+                btn.title = 'Згорнути карту (Esc)';
+                btn.style.backgroundColor = 'var(--danger)'; // Робимо червоною
+                btn.style.color = '#11111b';
+                btn.style.border = 'none';
+            } else {
+                btn.innerHTML = '⛶';
+                btn.title = 'Розгорнути карту';
+                btn.style.backgroundColor = 'var(--panel-bg)'; // Повертаємо темний
+                btn.style.color = 'var(--text-color)';
+                btn.style.border = '2px solid var(--border)';
+            }
+            
+            // Оновлюємо розміри карти
+            setTimeout(() => {
+                map.invalidateSize();
+            }, 300);
+        };
+        return btn;
+    };
+    expandControl.addTo(map);
 }
 
 async function loadData() {
@@ -454,6 +490,14 @@ inputField.addEventListener('input', (e) => {
                 }, 400);
             }
         }
+    }
+});
+
+// Закриття карти клавішею Escape
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && document.body.classList.contains('map-expanded')) {
+        const expandBtn = document.querySelector('.leaflet-control-expand');
+        if (expandBtn) expandBtn.click(); // Імітуємо натискання на наш хрестик
     }
 });
 
